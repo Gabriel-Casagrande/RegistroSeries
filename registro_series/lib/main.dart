@@ -1,25 +1,17 @@
 import 'dart:io';
+import 'package:flutter/material.dart';
 import 'package:registro_series/database/dao/seriedao.dart';
 import 'package:registro_series/model/serie.dart';
-import 'package:flutter/material.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
   if (Platform.isWindows || Platform.isLinux) {
     sqfliteFfiInit();
   }
 
   databaseFactory = databaseFactoryFfi;
-
-  // Dog meucachorro = Dog(id: 1, nome: 'Vitor', idade: 10);
-  // Dog meucachorro2 = Dog(id: 2, nome: 'Gabriel', idade: 3);
-
-  // insertDog(meucachorro);
-  // insertDog(meucachorro2);
-
-  // List dados = await findall();
-
-  debugPrint(findall().toString());
 
   runApp(MaterialApp(home: TelaPrincipal()));
 }
@@ -30,14 +22,24 @@ class TelaPrincipal extends StatefulWidget {
 }
 
 class _TelaPrincipalState extends State<TelaPrincipal> {
-  final List<Map<String, dynamic>> dados = [
-    {'id': 1, 'nome': 'Série 1', 'progresso': 0.7, 'avaliacao': 4},
-    {'id': 2, 'nome': 'Série 2', 'progresso': 0.5, 'avaliacao': 3},
-    {'id': 3, 'nome': 'Série 3', 'progresso': 0.9, 'avaliacao': 5},
-  ];
+  List<Serie> series = [];
 
-  void deleteById(int id) {
-    dados.removeWhere((item) => item['id'] == id);
+  @override
+  void initState() {
+    super.initState();
+    fetchSeries();
+  }
+
+  Future<void> fetchSeries() async {
+    final List<Serie> seriesList = await findAll();
+    setState(() {
+      series = seriesList;
+    });
+  }
+
+  Future<void> deleteById(int id) async {
+    await deleteById(id);
+    await fetchSeries();
   }
 
   Future<void> confirmDelete(BuildContext context, int id, String nome) async {
@@ -65,9 +67,7 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
               child: Text('Excluir'),
               onPressed: () {
                 Navigator.of(context).pop();
-                setState(() {
-                  deleteById(id);
-                });
+                deleteById(id);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('$nome foi deletado'),
@@ -97,48 +97,15 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
-      // body: FutureBuilder(
-      //   initialData: [],
-      //   future: findall(),
-      //   builder: (context, snapshot) {
-      //     switch (snapshot.connectionState) {
-      //       case ConnectionState.none:
-      //         return Center(
-      //             child: Text('Não houve conexão com o banco de dados'));
-      //       case ConnectionState.active:
-      //       case ConnectionState.waiting:
-      //         return const Center(child: CircularProgressIndicator());
-      //       case ConnectionState.done:
-      //         List<Map> dados = snapshot.data as List<Map>;
-
-      //         return ListView.builder(
-      //           itemCount: dados.length,
-      //           itemBuilder: (context, index) {
-      //             return ListTile(
-      //               title: Text('Nome: ${dados[index]['nome']}'),
-      //               subtitle: Text('Idade: ${dados[index]['idade']}'),
-      //               trailing: IconButton(
-      //                   onPressed: () {
-      //                     setState(() {
-      //                       deleteById(dados[index]['id']);
-      //                     });
-      //                   },
-      //                   icon: const Icon(Icons.delete)),
-      //             );
-      //           },
-      //         );
-      //     }
-      //   },
-      // ),
       body: ListView.builder(
-        itemCount: dados.length,
+        itemCount: series.length,
         itemBuilder: (context, index) {
           return Dismissible(
-            key: Key(dados[index]['id'].toString()),
+            key: Key(series[index].id.toString()),
             direction: DismissDirection.endToStart,
             confirmDismiss: ((direction) async {
               await confirmDelete(
-                  context, dados[index]['id'], dados[index]['nome']);
+                  context, series[index].id!, series[index].nome!);
               return Future.value(false);
             }),
             background: Container(
@@ -150,60 +117,69 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
                 color: Colors.white,
               ),
             ),
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Card(
-                elevation: 4,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        width: 50,
-                        height: 50,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[300],
-                          borderRadius: BorderRadius.circular(10),
+            child: GestureDetector(
+              onTap: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) =>
+                            SerieDados(serie: series[index])));
+              },
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Card(
+                  elevation: 4,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 50,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[300],
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(Icons.image, color: Colors.grey[700]),
                         ),
-                        child: Icon(Icons.image, color: Colors.grey[700]),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Nome: ${dados[index]['nome']}',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Nome: ${series[index].nome}',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 8),
-                            LinearProgressIndicator(
-                              value: dados[index]['progresso'],
-                              backgroundColor: Colors.grey[300],
-                              color: Color.fromARGB(255, 35, 49, 223),
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: List.generate(5, (starIndex) {
-                                return Icon(
-                                  starIndex < dados[index]['avaliacao']
-                                      ? Icons.star
-                                      : Icons.star_border,
-                                  color: Color.fromARGB(255, 35, 49, 223),
-                                );
-                              }),
-                            ),
-                          ],
+                              const SizedBox(height: 8),
+                              LinearProgressIndicator(
+                                value: series[index].progresso,
+                                backgroundColor: Colors.grey[300],
+                                color: Color.fromARGB(255, 35, 49, 223),
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: List.generate(5, (starIndex) {
+                                  return Icon(
+                                    starIndex < series[index].avaliacao!
+                                        ? Icons.star
+                                        : Icons.star_border,
+                                    color: Color.fromARGB(255, 35, 49, 223),
+                                  );
+                                }),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -211,9 +187,42 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        child: Icon(Icons.add),
+    );
+  }
+}
+
+class SerieDados extends StatelessWidget {
+  final Serie serie;
+
+  SerieDados({required this.serie});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(serie.nome ?? 'Detalhes da Série'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Nome: ${serie.nome}',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 16),
+            Text(
+              'Progresso: ${serie.progresso}',
+              style: TextStyle(fontSize: 18),
+            ),
+            SizedBox(height: 16),
+            Text(
+              'Avaliação: ${serie.avaliacao}',
+              style: TextStyle(fontSize: 18),
+            ),
+          ],
+        ),
       ),
     );
   }

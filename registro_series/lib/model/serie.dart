@@ -1,9 +1,7 @@
-import 'dart:ffi';
-
 class Serie {
   int? id;
   String? nome;
-  Float? progresso;
+  double? progresso;
   int? avaliacao;
 
   Serie(
@@ -17,11 +15,21 @@ class Serie {
       'id': id,
       'nome': nome,
       'progresso': progresso,
-      'avaliacao': avaliacao
+      'avaliacao': avaliacao,
     };
   }
 
-  String toSring() {
+  static Serie fromMap(Map<String, Object?> map) {
+    return Serie(
+      id: map['id'] as int?,
+      nome: map['nome'] as String?,
+      progresso: map['progresso'] as double?,
+      avaliacao: map['avaliacao'] as int?,
+    );
+  }
+
+  @override
+  String toString() {
     return 'Serie: {ID: $id, Nome: $nome, Progresso: $progresso, Avaliacao: $avaliacao}';
   }
 }
