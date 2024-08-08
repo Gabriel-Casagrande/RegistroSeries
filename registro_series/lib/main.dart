@@ -16,6 +16,7 @@ Future<void> main() async {
   runApp(MaterialApp(home: TelaPrincipal()));
 }
 
+// ignore: use_key_in_widget_constructors
 class TelaPrincipal extends StatefulWidget {
   @override
   State<TelaPrincipal> createState() => _TelaPrincipalState();
@@ -48,7 +49,7 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
       barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Confirmar Exclusão'),
+          title: const Text('Confirmar Exclusão'),
           content: SingleChildScrollView(
             child: ListBody(
               children: <Widget>[
@@ -58,13 +59,13 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
           ),
           actions: <Widget>[
             TextButton(
-              child: Text('Cancelar'),
+              child: const Text('Cancelar'),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             TextButton(
-              child: Text('Excluir'),
+              child: const Text('Excluir'),
               onPressed: () {
                 Navigator.of(context).pop();
                 deleteById(id);
@@ -111,8 +112,8 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
             background: Container(
               color: Colors.red,
               alignment: Alignment.centerRight,
-              padding: EdgeInsets.symmetric(horizontal: 20),
-              child: Icon(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: const Icon(
                 Icons.delete,
                 color: Colors.white,
               ),
@@ -153,7 +154,7 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
                             children: [
                               Text(
                                 'Nome: ${series[index].nome}',
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -209,14 +210,14 @@ class SerieDados extends StatelessWidget {
           children: [
             Text(
               'Nome: ${serie.nome}',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Text(
               'Progresso: ${serie.progresso}',
               style: TextStyle(fontSize: 18),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Text(
               'Avaliação: ${serie.avaliacao}',
               style: TextStyle(fontSize: 18),
