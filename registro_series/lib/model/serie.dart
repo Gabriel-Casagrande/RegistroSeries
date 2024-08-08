@@ -4,11 +4,12 @@ class Serie {
   double? progresso;
   int? avaliacao;
 
-  Serie(
-      {this.id,
-      required this.nome,
-      required this.progresso,
-      required this.avaliacao});
+  Serie({
+    this.id,
+    required this.nome,
+    required this.progresso,
+    required this.avaliacao,
+  });
 
   Map<String, Object?> toMap() {
     return {

@@ -11,22 +11,23 @@ Future<Database> getDatabase() async {
       await db.execute('CREATE TABLE series('
           'id INTEGER PRIMARY KEY, '
           'nome TEXT, '
-          'progresso DECIMAL, '
+          'progresso REAL, ' // Correção para REAL
           'avaliacao INTEGER)');
 
       await db.execute('CREATE TABLE episodios('
           'id INTEGER PRIMARY KEY, '
           'nome TEXT, '
-          'tempo DECIMAL, '
+          'tempo REAL, ' // Correção para REAL
           'avaliacao INTEGER)');
 
       await db.execute('CREATE TABLE series_episodios('
-          'id_serie INTENGER '
-          'id_episodio INTENGER '
-          'FOREIGN KEY(id_serie) REFERENCES series(id) '
-          'FOREIGN KEY(id_episodio) REFERENCES episodios(id) '
+          'id_serie INTEGER, '
+          'id_episodio INTEGER, '
+          'FOREIGN KEY(id_serie) REFERENCES series(id), '
+          'FOREIGN KEY(id_episodio) REFERENCES episodios(id), '
           'PRIMARY KEY (id_serie, id_episodio))');
 
+      // Inserir dados iniciais na tabela series
       await db.insert('series',
           {'id': 1, 'nome': 'Série 1', 'progresso': 0.7, 'avaliacao': 4});
       await db.insert('series',

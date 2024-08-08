@@ -16,7 +16,6 @@ Future<void> main() async {
   runApp(MaterialApp(home: TelaPrincipal()));
 }
 
-// ignore: use_key_in_widget_constructors
 class TelaPrincipal extends StatefulWidget {
   @override
   State<TelaPrincipal> createState() => _TelaPrincipalState();
@@ -38,7 +37,7 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
     });
   }
 
-  Future<void> deleteById(int id) async {
+  Future<void> deleteSerieById(int id) async {
     await deleteById(id);
     await fetchSeries();
   }
@@ -49,7 +48,7 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
       barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Confirmar Exclusão'),
+          title: Text('Confirmar Exclusão'),
           content: SingleChildScrollView(
             child: ListBody(
               children: <Widget>[
@@ -59,16 +58,16 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text('Cancelar'),
+              child: Text('Cancelar'),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             TextButton(
-              child: const Text('Excluir'),
+              child: Text('Excluir'),
               onPressed: () {
                 Navigator.of(context).pop();
-                deleteById(id);
+                deleteSerieById(id);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('$nome foi deletado'),
@@ -98,96 +97,100 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
-      body: ListView.builder(
-        itemCount: series.length,
-        itemBuilder: (context, index) {
-          return Dismissible(
-            key: Key(series[index].id.toString()),
-            direction: DismissDirection.endToStart,
-            confirmDismiss: ((direction) async {
-              await confirmDelete(
-                  context, series[index].id!, series[index].nome!);
-              return Future.value(false);
-            }),
-            background: Container(
-              color: Colors.red,
-              alignment: Alignment.centerRight,
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: const Icon(
-                Icons.delete,
-                color: Colors.white,
-              ),
-            ),
-            child: GestureDetector(
-              onTap: () {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) =>
-                            SerieDados(serie: series[index])));
-              },
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Card(
-                  elevation: 4,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15),
+      body: series.isEmpty
+          ? Center(child: CircularProgressIndicator())
+          : ListView.builder(
+              itemCount: series.length,
+              itemBuilder: (context, index) {
+                return Dismissible(
+                  key: Key(series[index].id.toString()),
+                  direction: DismissDirection.endToStart,
+                  confirmDismiss: ((direction) async {
+                    await confirmDelete(
+                        context, series[index].id!, series[index].nome!);
+                    return Future.value(false);
+                  }),
+                  background: Container(
+                    color: Colors.red,
+                    alignment: Alignment.centerRight,
+                    padding: EdgeInsets.symmetric(horizontal: 20),
+                    child: Icon(
+                      Icons.delete,
+                      color: Colors.white,
+                    ),
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 50,
-                          height: 50,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[300],
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Icon(Icons.image, color: Colors.grey[700]),
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) =>
+                                  SerieDados(serie: series[index])));
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Card(
+                        elevation: 4,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15),
                         ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                'Nome: ${series[index].nome}',
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
+                              Container(
+                                width: 50,
+                                height: 50,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[300],
+                                  borderRadius: BorderRadius.circular(10),
                                 ),
+                                child:
+                                    Icon(Icons.image, color: Colors.grey[700]),
                               ),
-                              const SizedBox(height: 8),
-                              LinearProgressIndicator(
-                                value: series[index].progresso,
-                                backgroundColor: Colors.grey[300],
-                                color: Color.fromARGB(255, 35, 49, 223),
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                children: List.generate(5, (starIndex) {
-                                  return Icon(
-                                    starIndex < series[index].avaliacao!
-                                        ? Icons.star
-                                        : Icons.star_border,
-                                    color: Color.fromARGB(255, 35, 49, 223),
-                                  );
-                                }),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Nome: ${series[index].nome}',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    LinearProgressIndicator(
+                                      value: series[index].progresso,
+                                      backgroundColor: Colors.grey[300],
+                                      color: Color.fromARGB(255, 35, 49, 223),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Row(
+                                      children: List.generate(5, (starIndex) {
+                                        return Icon(
+                                          starIndex < series[index].avaliacao!
+                                              ? Icons.star
+                                              : Icons.star_border,
+                                          color:
+                                              Color.fromARGB(255, 35, 49, 223),
+                                        );
+                                      }),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ],
                           ),
                         ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
-              ),
+                );
+              },
             ),
-          );
-        },
-      ),
     );
   }
 }
@@ -210,14 +213,14 @@ class SerieDados extends StatelessWidget {
           children: [
             Text(
               'Nome: ${serie.nome}',
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             Text(
               'Progresso: ${serie.progresso}',
               style: TextStyle(fontSize: 18),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             Text(
               'Avaliação: ${serie.avaliacao}',
               style: TextStyle(fontSize: 18),
