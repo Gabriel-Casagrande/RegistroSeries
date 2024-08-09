@@ -27,10 +27,10 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
   @override
   void initState() {
     super.initState();
-    fetchSeries();
+    buscarSeries();
   }
 
-  Future<void> fetchSeries() async {
+  Future<void> buscarSeries() async {
     final List<Serie> seriesList = await findAll();
     setState(() {
       series = seriesList;
@@ -39,7 +39,7 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
 
   Future<void> deleteSerieById(int id) async {
     await deleteById(id);
-    await fetchSeries();
+    await buscarSeries();
   }
 
   Future<void> confirmDelete(BuildContext context, int id, String nome) async {
@@ -107,7 +107,7 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
                   direction: DismissDirection.endToStart,
                   confirmDismiss: ((direction) async {
                     await confirmDelete(
-                        context, series[index].id!, series[index].nome!);
+                        context, series[index].id, series[index].nome);
                     return Future.value(false);
                   }),
                   background: Container(
@@ -171,7 +171,7 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
                                     Row(
                                       children: List.generate(5, (starIndex) {
                                         return Icon(
-                                          starIndex < series[index].avaliacao!
+                                          starIndex < series[index].avaliacao
                                               ? Icons.star
                                               : Icons.star_border,
                                           color:
@@ -191,6 +191,16 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
                 );
               },
             ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => AddSeriePage()),
+          );
+        },
+        child: Icon(Icons.add),
+        backgroundColor: Color.fromARGB(255, 35, 49, 223), // Cor azul
+      ),
     );
   }
 }
@@ -204,28 +214,228 @@ class SerieDados extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(serie.nome ?? 'Detalhes da Série'),
+        title: Text(
+          serie.nome,
+          style: TextStyle(
+            color: Color.fromARGB(255, 35, 49, 223), // Cor azul
+            fontSize: 30,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        centerTitle: true,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Nome: ${serie.nome}',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            Center(
+              child: Column(
+                children: [
+                  Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      Icons.image,
+                      color: Colors.grey[700],
+                      size: 50,
+                    ),
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    'Sinopse',
+                    style: TextStyle(
+                      fontSize: 24,
+                      color: Color.fromARGB(255, 35, 49, 223), // Cor azul
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 16),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 32),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildTemporadaItem(context, 'Temporada 1', locked: true),
+                _buildTemporadaItem(context, 'Temporada 2'),
+                _buildTemporadaItem(context, 'Temporada 3', locked: true),
+                _buildTemporadaItem(context, 'Temporada 4'),
+              ],
             ),
             SizedBox(height: 16),
-            Text(
-              'Progresso: ${serie.progresso}',
-              style: TextStyle(fontSize: 18),
-            ),
-            SizedBox(height: 16),
-            Text(
-              'Avaliação: ${serie.avaliacao}',
-              style: TextStyle(fontSize: 18),
-            ),
+            _buildEpisodioItem('Episodio 1', '45:40', completed: true),
+            _buildEpisodioItem('Episodio 2', '25:13'),
+            _buildEpisodioItem('Episodio 3', '12:29'),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTemporadaItem(BuildContext context, String temporada,
+      {bool locked = false}) {
+    return Container(
+      padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+      margin: EdgeInsets.symmetric(vertical: 5),
+      decoration: BoxDecoration(
+        color: Color.fromARGB(255, 184, 204, 240), // Cor azul clara
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              temporada,
+              style: TextStyle(
+                fontSize: 18,
+                color: Color.fromARGB(255, 35, 49, 223), // Cor azul
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          if (locked)
+            Icon(
+              Icons.lock,
+              color: Color.fromARGB(255, 35, 49, 223), // Cor azul
+            ),
+          if (!locked)
+            Checkbox(
+              value: false,
+              onChanged: (bool? value) {},
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEpisodioItem(String episodio, String duration,
+      {bool completed = false}) {
+    return Container(
+      padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+      margin: EdgeInsets.symmetric(vertical: 5),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.grey[300]!),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              episodio,
+              style: TextStyle(
+                fontSize: 16,
+                color: Color.fromARGB(255, 35, 49, 223), // Cor azul
+              ),
+            ),
+          ),
+          Text(
+            duration,
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey[700],
+            ),
+          ),
+          Checkbox(
+            value: completed,
+            onChanged: (bool? value) {},
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class AddSeriePage extends StatefulWidget {
+  @override
+  _AddSeriePageState createState() => _AddSeriePageState();
+}
+
+class _AddSeriePageState extends State<AddSeriePage> {
+  final _formKey = GlobalKey<FormState>();
+  final _nomeController = TextEditingController();
+  final _progressoController = TextEditingController();
+  final _avaliacaoController = TextEditingController();
+
+  void _saveSerie() {
+    if (_formKey.currentState!.validate()) {
+      Serie newSerie = Serie(
+        nome: _nomeController.text,
+        progresso: double.tryParse(_progressoController.text) ?? 0,
+        avaliacao: int.tryParse(_avaliacaoController.text) ?? 0,
+      );
+
+      // Adicione aqui a lógica para salvar a série no banco de dados
+
+      Navigator.pop(context, newSerie); // Retorna para a tela anterior
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Adicionar Série'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: <Widget>[
+              TextFormField(
+                controller: _nomeController,
+                decoration: InputDecoration(labelText: 'Nome da Série'),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Por favor, insira o nome da série';
+                  }
+                  return null;
+                },
+              ),
+              TextFormField(
+                controller: _progressoController,
+                decoration: InputDecoration(labelText: 'Progresso (%)'),
+                keyboardType: TextInputType.number,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Por favor, insira o progresso';
+                  }
+                  return null;
+                },
+              ),
+              TextFormField(
+                controller: _avaliacaoController,
+                decoration: InputDecoration(labelText: 'Avaliação (0-10)'),
+                keyboardType: TextInputType.number,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Por favor, insira a avaliação';
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: _saveSerie,
+                child: Text('Salvar'),
+                style: ElevatedButton.styleFrom(
+                  primary: Color.fromARGB(255, 35, 49, 223), // Cor azul
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

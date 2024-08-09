@@ -1,11 +1,11 @@
 class Serie {
-  int? id;
-  String? nome;
-  double? progresso;
-  int? avaliacao;
+  int id;
+  String nome;
+  double progresso;
+  int avaliacao;
 
   Serie({
-    this.id,
+    required this.id,
     required this.nome,
     required this.progresso,
     required this.avaliacao,
@@ -20,12 +20,12 @@ class Serie {
     };
   }
 
-  static Serie fromMap(Map<String, Object?> map) {
+  static Serie fromMap(Map<String, Object?> mapa) {
     return Serie(
-      id: map['id'] as int?,
-      nome: map['nome'] as String?,
-      progresso: map['progresso'] as double?,
-      avaliacao: map['avaliacao'] as int?,
+      id: int.parse(mapa['id'].toString()),
+      nome: mapa['nome'].toString(),
+      progresso: double.parse(mapa['progresso'].toString()),
+      avaliacao: int.parse(mapa['avaliacao'].toString()),
     );
   }
 
