@@ -1,7 +1,10 @@
+// ignore_for_file: prefer_const_constructors
+
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:registro_series/database/dao/seriedao.dart';
 import 'package:registro_series/model/serie.dart';
+import 'package:registro_series/pages/selectSeries.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 Future<void> main() async {
@@ -22,63 +25,32 @@ class TelaPrincipal extends StatefulWidget {
 }
 
 class _TelaPrincipalState extends State<TelaPrincipal> {
-  List<Serie> series = [];
+  late Future<List<Serie>> _futureSeries;
+  List<int> _selectedSeriesIds = [];
 
   @override
   void initState() {
     super.initState();
-    buscarSeries();
+    _loadSeries();
   }
 
-  Future<void> buscarSeries() async {
-    final List<Serie> seriesList = await findAll();
+  void _loadSeries() {
     setState(() {
-      series = seriesList;
+      _futureSeries = findAll().then((allSeries) {
+        if (_selectedSeriesIds.isNotEmpty) {
+          return allSeries.where((serie) => _selectedSeriesIds.contains(serie.id)).toList();
+        } else {
+          return allSeries;
+        }
+      });
     });
   }
 
-  Future<void> deleteSerieById(int id) async {
-    await deleteById(id);
-    await buscarSeries();
-  }
-
-  Future<void> confirmDelete(BuildContext context, int id, String nome) async {
-    return showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Confirmar Exclusão'),
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: <Widget>[
-                Text('Tem certeza que deseja excluir "$nome"?'),
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text('Cancelar'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: Text('Excluir'),
-              onPressed: () {
-                Navigator.of(context).pop();
-                deleteSerieById(id);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('$nome foi deletado'),
-                  ),
-                );
-              },
-            ),
-          ],
-        );
-      },
-    );
+  void _updateSelectedSeries(List<int> selectedIds) {
+    setState(() {
+      _selectedSeriesIds = selectedIds;
+    });
+    _loadSeries();
   }
 
   @override
@@ -88,28 +60,37 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
         title: const Text(
           "Registro de Séries",
           style: TextStyle(
-              fontSize: 30,
-              color: Color.fromARGB(255, 35, 49, 223),
-              fontWeight: FontWeight.bold,
-              fontFamily: 'Serif'),
+            fontSize: 30,
+            color: Color.fromARGB(255, 35, 49, 223),
+            fontWeight: FontWeight.bold,
+            fontFamily: 'Serif',
+          ),
         ),
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
-      body: series.isEmpty
-          ? Center(child: CircularProgressIndicator())
-          : ListView.builder(
+      body: FutureBuilder<List<Serie>>(
+        future: _futureSeries,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Erro ao carregar as séries.'));
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return Center(child: Text('Nenhuma série encontrada.'));
+          } else {
+            final series = snapshot.data!;
+            return ListView.builder(
               itemCount: series.length,
               itemBuilder: (context, index) {
                 return Dismissible(
                   key: Key(series[index].id.toString()),
                   direction: DismissDirection.endToStart,
-                  confirmDismiss: ((direction) async {
-                    await confirmDelete(
-                        context, series[index].id, series[index].nome);
-                    return Future.value(false);
-                  }),
+                  confirmDismiss: (direction) async {
+                    await _confirmDelete(context, series[index].id!, series[index].nome);
+                    return false;
+                  },
                   background: Container(
                     color: Colors.red,
                     alignment: Alignment.centerRight,
@@ -122,10 +103,11 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
                   child: GestureDetector(
                     onTap: () {
                       Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) =>
-                                  SerieDados(serie: series[index])));
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => SerieDados(serie: series[index]),
+                        ),
+                      );
                     },
                     child: Padding(
                       padding: const EdgeInsets.all(8.0),
@@ -146,8 +128,7 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
                                   color: Colors.grey[300],
                                   borderRadius: BorderRadius.circular(10),
                                 ),
-                                child:
-                                    Icon(Icons.image, color: Colors.grey[700]),
+                                child: Icon(Icons.image, color: Colors.grey[700]),
                               ),
                               const SizedBox(width: 16),
                               Expanded(
@@ -174,8 +155,7 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
                                           starIndex < series[index].avaliacao
                                               ? Icons.star
                                               : Icons.star_border,
-                                          color:
-                                              Color.fromARGB(255, 35, 49, 223),
+                                          color: Color.fromARGB(255, 35, 49, 223),
                                         );
                                       }),
                                     ),
@@ -190,17 +170,66 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
                   ),
                 );
               },
-            ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => AddSeriePage()),
-          );
+            );
+          }
         },
-        child: Icon(Icons.add),
-        backgroundColor: Color.fromARGB(255, 35, 49, 223), // Cor azul
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          final selectedSeriesIds = await Navigator.push<List<int>>(
+            context,
+            MaterialPageRoute(
+              builder: (context) => SelectSeriesPage(selectedSeriesIds: _selectedSeriesIds),
+            ),
+          );
+
+          if (selectedSeriesIds != null) {
+            _updateSelectedSeries(selectedSeriesIds);
+          }
+        },
+        backgroundColor: Color.fromARGB(255, 35, 49, 223),
+        child: Icon(Icons.list), // Cor azul
+      ),
+    );
+  }
+
+  Future<void> _confirmDelete(BuildContext context, int id, String nome) async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Confirmar Exclusão'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text('Tem certeza que deseja excluir "$nome"?'),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Cancelar'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: Text('Excluir'),
+              onPressed: () async {
+                Navigator.of(context).pop();
+                await deleteById(id);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('$nome foi deletado'),
+                  ),
+                );
+                _loadSeries();  // Atualiza a lista de séries após deletar
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -284,8 +313,7 @@ class SerieDados extends StatelessWidget {
     );
   }
 
-  Widget _buildTemporadaItem(BuildContext context, String temporada,
-      {bool locked = false}) {
+  Widget _buildTemporadaItem(BuildContext context, String temporada, {bool locked = false}) {
     return Container(
       padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
       margin: EdgeInsets.symmetric(vertical: 5),
@@ -320,14 +348,15 @@ class SerieDados extends StatelessWidget {
     );
   }
 
-  Widget _buildEpisodioItem(String episodio, String duration,
-      {bool completed = false}) {
+  Widget _buildEpisodioItem(String episodio, String duracao, {bool completed = false}) {
     return Container(
       padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
       margin: EdgeInsets.symmetric(vertical: 5),
       decoration: BoxDecoration(
+        color: completed
+            ? Color.fromARGB(255, 173, 216, 230)
+            : Color.fromARGB(255, 184, 204, 240),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.grey[300]!),
       ),
       child: Row(
         children: [
@@ -341,10 +370,10 @@ class SerieDados extends StatelessWidget {
             ),
           ),
           Text(
-            duration,
+            duracao,
             style: TextStyle(
               fontSize: 16,
-              color: Colors.grey[700],
+              color: Color.fromARGB(255, 35, 49, 223), // Cor azul
             ),
           ),
           Checkbox(
@@ -358,6 +387,8 @@ class SerieDados extends StatelessWidget {
 }
 
 class AddSeriePage extends StatefulWidget {
+  const AddSeriePage({super.key});
+
   @override
   _AddSeriePageState createState() => _AddSeriePageState();
 }
@@ -429,10 +460,9 @@ class _AddSeriePageState extends State<AddSeriePage> {
               SizedBox(height: 20),
               ElevatedButton(
                 onPressed: _saveSerie,
-                child: Text('Salvar'),
                 style: ElevatedButton.styleFrom(
-                  primary: Color.fromARGB(255, 35, 49, 223), // Cor azul
                 ),
+                child: Text('Salvar'),
               ),
             ],
           ),

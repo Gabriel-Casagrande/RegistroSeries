@@ -1,11 +1,11 @@
 class Serie {
-  int id;
+  int? id;
   String nome;
   double progresso;
   int avaliacao;
 
   Serie({
-    required this.id,
+    this.id,
     required this.nome,
     required this.progresso,
     required this.avaliacao,
