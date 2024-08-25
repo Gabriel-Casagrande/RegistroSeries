@@ -3,13 +3,14 @@ class Serie {
   String nome;
   double progresso;
   int avaliacao;
+  String sinopse;
 
-  Serie({
-    this.id,
-    required this.nome,
-    required this.progresso,
-    required this.avaliacao,
-  });
+  Serie(
+      {this.id,
+      required this.nome,
+      required this.progresso,
+      required this.avaliacao,
+      required this.sinopse});
 
   Map<String, Object?> toMap() {
     return {
@@ -17,6 +18,7 @@ class Serie {
       'nome': nome,
       'progresso': progresso,
       'avaliacao': avaliacao,
+      'sinopse': sinopse
     };
   }
 
@@ -26,11 +28,12 @@ class Serie {
       nome: mapa['nome'].toString(),
       progresso: double.parse(mapa['progresso'].toString()),
       avaliacao: int.parse(mapa['avaliacao'].toString()),
+      sinopse: mapa['sinopse'].toString(),
     );
   }
 
   @override
   String toString() {
-    return 'Serie: {ID: $id, Nome: $nome, Progresso: $progresso, Avaliacao: $avaliacao}';
+    return 'Serie: {ID: $id, Nome: $nome, Progresso: $progresso, Avaliacao: $avaliacao, Sinopse: $sinopse}';
   }
 }

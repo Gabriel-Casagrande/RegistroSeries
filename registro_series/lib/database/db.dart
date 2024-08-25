@@ -3,19 +3,20 @@ import 'package:registro_series/database/dao/seriedao.dart';
 import 'package:sqflite/sqflite.dart';
 
 Future<Database> getDatabase() async {
-  String caminhoBanco = join(await getDatabasesPath(), 'serie2BBd.db');
+  String caminhoBanco = join(await getDatabasesPath(), 'sefudeewewew.db');
 
   return openDatabase(caminhoBanco, version: 1, onCreate: (db, version) async {
     await db.execute('CREATE TABLE series('
         'id INTEGER PRIMARY KEY AUTOINCREMENT, '
         'nome TEXT, '
         'progresso DECIMAL, '
-        'avaliacao INTEGER)');
+        'avaliacao INTEGER, '
+        'sinopse TEXT)');
 
     await db.execute('CREATE TABLE episodios('
         'id INTEGER PRIMARY KEY AUTOINCREMENT, '
         'nome TEXT, '
-        'tempo DECIMAL, '
+        'tempo TEXT, '
         'episodio INTEGER, '
         'temporada INTEGER)');
 

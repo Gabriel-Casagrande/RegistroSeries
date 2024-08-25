@@ -38,7 +38,9 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
     setState(() {
       _futureSeries = findAll().then((allSeries) {
         if (_selectedSeriesIds.isNotEmpty) {
-          return allSeries.where((serie) => _selectedSeriesIds.contains(serie.id)).toList();
+          return allSeries
+              .where((serie) => _selectedSeriesIds.contains(serie.id))
+              .toList();
         } else {
           return allSeries;
         }
@@ -88,7 +90,8 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
                   key: Key(series[index].id.toString()),
                   direction: DismissDirection.endToStart,
                   confirmDismiss: (direction) async {
-                    await _confirmDelete(context, series[index].id!, series[index].nome);
+                    await _confirmDelete(
+                        context, series[index].id!, series[index].nome);
                     return false;
                   },
                   background: Container(
@@ -105,7 +108,8 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => SerieDados(serie: series[index]),
+                          builder: (context) =>
+                              SerieDados(serie: series[index]),
                         ),
                       );
                     },
@@ -128,7 +132,8 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
                                   color: Colors.grey[300],
                                   borderRadius: BorderRadius.circular(10),
                                 ),
-                                child: Icon(Icons.image, color: Colors.grey[700]),
+                                child:
+                                    Icon(Icons.image, color: Colors.grey[700]),
                               ),
                               const SizedBox(width: 16),
                               Expanded(
@@ -155,7 +160,8 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
                                           starIndex < series[index].avaliacao
                                               ? Icons.star
                                               : Icons.star_border,
-                                          color: Color.fromARGB(255, 35, 49, 223),
+                                          color:
+                                              Color.fromARGB(255, 35, 49, 223),
                                         );
                                       }),
                                     ),
@@ -179,7 +185,8 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
           final selectedSeriesIds = await Navigator.push<List<int>>(
             context,
             MaterialPageRoute(
-              builder: (context) => SelectSeriesPage(selectedSeriesIds: _selectedSeriesIds),
+              builder: (context) =>
+                  SelectSeriesPage(selectedSeriesIds: _selectedSeriesIds),
             ),
           );
 
@@ -224,7 +231,7 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
                     content: Text('$nome foi deletado'),
                   ),
                 );
-                _loadSeries();  // Atualiza a lista de séries após deletar
+                _loadSeries(); // Atualiza a lista de séries após deletar
               },
             ),
           ],
@@ -286,10 +293,20 @@ class SerieDados extends StatelessWidget {
                   ),
                   SizedBox(height: 8),
                   Text(
-                    'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed eiusmod tempor incididunt ut labore et dolore magna aliqua.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 16),
+                    serie.sinopse.length > 100
+                        ? serie.sinopse.substring(0, 100) + '...'
+                        : serie.sinopse,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
+                  // Text(
+                  //   serie.sinopse,
+                  //   textAlign: TextAlign.center,
+                  //   style: TextStyle(fontSize: 16),
+                  // ),
                 ],
               ),
             ),
@@ -313,7 +330,8 @@ class SerieDados extends StatelessWidget {
     );
   }
 
-  Widget _buildTemporadaItem(BuildContext context, String temporada, {bool locked = false}) {
+  Widget _buildTemporadaItem(BuildContext context, String temporada,
+      {bool locked = false}) {
     return Container(
       padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
       margin: EdgeInsets.symmetric(vertical: 5),
@@ -348,7 +366,8 @@ class SerieDados extends StatelessWidget {
     );
   }
 
-  Widget _buildEpisodioItem(String episodio, String duracao, {bool completed = false}) {
+  Widget _buildEpisodioItem(String episodio, String duracao,
+      {bool completed = false}) {
     return Container(
       padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
       margin: EdgeInsets.symmetric(vertical: 5),
@@ -381,92 +400,6 @@ class SerieDados extends StatelessWidget {
             onChanged: (bool? value) {},
           ),
         ],
-      ),
-    );
-  }
-}
-
-class AddSeriePage extends StatefulWidget {
-  const AddSeriePage({super.key});
-
-  @override
-  _AddSeriePageState createState() => _AddSeriePageState();
-}
-
-class _AddSeriePageState extends State<AddSeriePage> {
-  final _formKey = GlobalKey<FormState>();
-  final _nomeController = TextEditingController();
-  final _progressoController = TextEditingController();
-  final _avaliacaoController = TextEditingController();
-
-  void _saveSerie() {
-    if (_formKey.currentState!.validate()) {
-      Serie newSerie = Serie(
-        nome: _nomeController.text,
-        progresso: double.tryParse(_progressoController.text) ?? 0,
-        avaliacao: int.tryParse(_avaliacaoController.text) ?? 0,
-      );
-
-      // Adicione aqui a lógica para salvar a série no banco de dados
-
-      Navigator.pop(context, newSerie); // Retorna para a tela anterior
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Adicionar Série'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: <Widget>[
-              TextFormField(
-                controller: _nomeController,
-                decoration: InputDecoration(labelText: 'Nome da Série'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor, insira o nome da série';
-                  }
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: _progressoController,
-                decoration: InputDecoration(labelText: 'Progresso (%)'),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor, insira o progresso';
-                  }
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: _avaliacaoController,
-                decoration: InputDecoration(labelText: 'Avaliação (0-10)'),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor, insira a avaliação';
-                  }
-                  return null;
-                },
-              ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _saveSerie,
-                style: ElevatedButton.styleFrom(
-                ),
-                child: Text('Salvar'),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

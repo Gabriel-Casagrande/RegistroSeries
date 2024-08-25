@@ -1,3 +1,5 @@
+// ignore_for_file: prefer_const_constructors
+
 import 'package:flutter/material.dart';
 import 'package:registro_series/database/dao/seriedao.dart';
 import 'package:registro_series/model/serie.dart';
@@ -5,7 +7,7 @@ import 'package:registro_series/model/serie.dart';
 class SelectSeriesPage extends StatefulWidget {
   final List<int> selectedSeriesIds; // IDs das séries atualmente selecionadas
 
-  SelectSeriesPage({required this.selectedSeriesIds});
+  const SelectSeriesPage({super.key, required this.selectedSeriesIds});
 
   @override
   _SelectSeriesPageState createState() => _SelectSeriesPageState();
@@ -19,7 +21,8 @@ class _SelectSeriesPageState extends State<SelectSeriesPage> {
   void initState() {
     super.initState();
     _futureSeries = findAll();
-    _selectedSeriesIds = List.from(widget.selectedSeriesIds); // Copiar os IDs selecionados
+    _selectedSeriesIds =
+        List.from(widget.selectedSeriesIds); // Copiar os IDs selecionados
   }
 
   void _toggleSelection(int id) {
@@ -66,7 +69,9 @@ class _SelectSeriesPageState extends State<SelectSeriesPage> {
                 return ListTile(
                   title: Text(serie.nome),
                   trailing: Icon(
-                    isSelected ? Icons.check_box : Icons.check_box_outline_blank,
+                    isSelected
+                        ? Icons.check_box
+                        : Icons.check_box_outline_blank,
                     color: isSelected ? Colors.blue : null,
                   ),
                   onTap: () => _toggleSelection(serie.id!),
