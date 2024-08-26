@@ -3,6 +3,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:registro_series/database/dao/seriedao.dart';
+import 'package:registro_series/database/db.dart';
 import 'package:registro_series/model/serie.dart';
 import 'package:registro_series/pages/selectSeries.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -109,7 +110,7 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
                         context,
                         MaterialPageRoute(
                           builder: (context) =>
-                              SerieDados(serie: series[index]),
+                              SeriesWithSeasonsPage(serie: series[index]),
                         ),
                       );
                     },
@@ -241,164 +242,128 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
   }
 }
 
-class SerieDados extends StatelessWidget {
-  final Serie serie;
+// Fetch all series
+Future<List<Serie>> fetchSeries() async {
+  Database db = await getDatabase();
+  final List<Map<String, dynamic>> maps = await db.query('series');
+  return List.generate(maps.length, (i) {
+    return Serie.fromMap(maps[i]);
+  });
+}
 
-  SerieDados({required this.serie});
+// Fetch seasons by series ID
+Future<List<int>> fetchSeasonsBySeriesId(int seriesId) async {
+  Database db = await getDatabase();
+  final List<Map<String, dynamic>> maps = await db.rawQuery(
+    'SELECT DISTINCT temporada FROM episodios WHERE id_serie = ? ORDER BY temporada',
+    [seriesId],
+  );
+  return maps.map((map) => map['temporada'] as int).toList();
+}
+
+// Fetch episodes by series ID and season number
+Future<List<Map<String, dynamic>>> fetchEpisodesBySeriesIdAndSeason(
+    int seriesId, int season) async {
+  Database db = await getDatabase();
+  return await db.query(
+    'episodios',
+    where: 'id_serie = ? AND temporada = ?',
+    whereArgs: [seriesId, season],
+    orderBy: 'episodio',
+  );
+}
+
+class SeriesWithSeasonsPage extends StatefulWidget {
+  final Serie serie; // Accept Serie object in the constructor
+
+  const SeriesWithSeasonsPage({Key? key, required this.serie})
+      : super(key: key);
+
+  @override
+  _SeriesWithSeasonsPageState createState() => _SeriesWithSeasonsPageState();
+}
+
+class _SeriesWithSeasonsPageState extends State<SeriesWithSeasonsPage> {
+  late Future<List<int>> _futureSeasons;
+  int? _selectedSeason;
+  Future<List<Map<String, dynamic>>>? _futureEpisodes;
+
+  @override
+  void initState() {
+    super.initState();
+    _futureSeasons = fetchSeasonsBySeriesId(widget.serie.id!);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          serie.nome,
-          style: TextStyle(
-            color: Color.fromARGB(255, 35, 49, 223), // Cor azul
-            fontSize: 30,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        centerTitle: true,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
+        title: Text('Séries e Temporadas: ${widget.serie.nome}'),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Column(
-                children: [
-                  Container(
-                    width: 100,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(
-                      Icons.image,
-                      color: Colors.grey[700],
-                      size: 50,
-                    ),
-                  ),
-                  SizedBox(height: 16),
-                  Text(
-                    'Sinopse',
-                    style: TextStyle(
-                      fontSize: 24,
-                      color: Color.fromARGB(255, 35, 49, 223), // Cor azul
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    textAlign: TextAlign.center,
-                    serie.sinopse.length > 100
-                        ? serie.sinopse.substring(0, 100) + '...'
-                        : serie.sinopse,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  // Text(
-                  //   serie.sinopse,
-                  //   textAlign: TextAlign.center,
-                  //   style: TextStyle(fontSize: 16),
-                  // ),
-                ],
-              ),
-            ),
-            SizedBox(height: 32),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildTemporadaItem(context, 'Temporada 1', locked: true),
-                _buildTemporadaItem(context, 'Temporada 2'),
-                _buildTemporadaItem(context, 'Temporada 3', locked: true),
-                _buildTemporadaItem(context, 'Temporada 4'),
-              ],
-            ),
-            SizedBox(height: 16),
-            _buildEpisodioItem('Episodio 1', '45:40', completed: true),
-            _buildEpisodioItem('Episodio 2', '25:13'),
-            _buildEpisodioItem('Episodio 3', '12:29'),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTemporadaItem(BuildContext context, String temporada,
-      {bool locked = false}) {
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-      margin: EdgeInsets.symmetric(vertical: 5),
-      decoration: BoxDecoration(
-        color: Color.fromARGB(255, 184, 204, 240), // Cor azul clara
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
+      body: Column(
         children: [
-          Expanded(
-            child: Text(
-              temporada,
-              style: TextStyle(
-                fontSize: 18,
-                color: Color.fromARGB(255, 35, 49, 223), // Cor azul
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+          FutureBuilder<List<int>>(
+            future: _futureSeasons,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Center(child: CircularProgressIndicator());
+              } else if (snapshot.hasError) {
+                return Center(child: Text('Erro ao carregar as temporadas.'));
+              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return Center(child: Text('Nenhuma temporada encontrada.'));
+              } else {
+                final seasons = snapshot.data!;
+                return DropdownButton<int>(
+                  hint: Text('Selecione uma temporada'),
+                  value: _selectedSeason,
+                  items: seasons.map((season) {
+                    return DropdownMenuItem<int>(
+                      value: season,
+                      child: Text('Temporada $season'),
+                    );
+                  }).toList(),
+                  onChanged: (season) {
+                    setState(() {
+                      _selectedSeason = season;
+                      _futureEpisodes = fetchEpisodesBySeriesIdAndSeason(
+                        widget.serie.id!,
+                        _selectedSeason!,
+                      );
+                    });
+                  },
+                );
+              }
+            },
           ),
-          if (locked)
-            Icon(
-              Icons.lock,
-              color: Color.fromARGB(255, 35, 49, 223), // Cor azul
+          if (_selectedSeason != null)
+            FutureBuilder<List<Map<String, dynamic>>>(
+              future: _futureEpisodes,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return Center(child: Text('Erro ao carregar os episódios.'));
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return Center(child: Text('Nenhum episódio encontrado.'));
+                } else {
+                  final episodes = snapshot.data!;
+                  return Expanded(
+                    child: ListView.builder(
+                      itemCount: episodes.length,
+                      itemBuilder: (context, index) {
+                        final episode = episodes[index];
+                        return ListTile(
+                          title: Text(
+                            'Ep ${episode['episodio']}: ${episode['nome']}',
+                          ),
+                          subtitle: Text('Duração: ${episode['tempo']} min'),
+                        );
+                      },
+                    ),
+                  );
+                }
+              },
             ),
-          if (!locked)
-            Checkbox(
-              value: false,
-              onChanged: (bool? value) {},
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEpisodioItem(String episodio, String duracao,
-      {bool completed = false}) {
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-      margin: EdgeInsets.symmetric(vertical: 5),
-      decoration: BoxDecoration(
-        color: completed
-            ? Color.fromARGB(255, 173, 216, 230)
-            : Color.fromARGB(255, 184, 204, 240),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              episodio,
-              style: TextStyle(
-                fontSize: 16,
-                color: Color.fromARGB(255, 35, 49, 223), // Cor azul
-              ),
-            ),
-          ),
-          Text(
-            duracao,
-            style: TextStyle(
-              fontSize: 16,
-              color: Color.fromARGB(255, 35, 49, 223), // Cor azul
-            ),
-          ),
-          Checkbox(
-            value: completed,
-            onChanged: (bool? value) {},
-          ),
         ],
       ),
     );

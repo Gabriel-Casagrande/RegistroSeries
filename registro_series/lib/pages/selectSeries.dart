@@ -5,7 +5,7 @@ import 'package:registro_series/database/dao/seriedao.dart';
 import 'package:registro_series/model/serie.dart';
 
 class SelectSeriesPage extends StatefulWidget {
-  final List<int> selectedSeriesIds; // IDs das séries atualmente selecionadas
+  final List<int> selectedSeriesIds;
 
   const SelectSeriesPage({super.key, required this.selectedSeriesIds});
 
@@ -21,8 +21,7 @@ class _SelectSeriesPageState extends State<SelectSeriesPage> {
   void initState() {
     super.initState();
     _futureSeries = findAll();
-    _selectedSeriesIds =
-        List.from(widget.selectedSeriesIds); // Copiar os IDs selecionados
+    _selectedSeriesIds = List.from(widget.selectedSeriesIds);
   }
 
   void _toggleSelection(int id) {
