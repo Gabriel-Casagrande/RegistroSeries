@@ -1,10 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:registro_series/database/dao/seriedao.dart';
 import 'package:sqflite/sqflite.dart';
 
 Future<Database> getDatabase() async {
-  String caminhoBanco =
-      join(await getDatabasesPath(), 'sefudeewdasdawwewewewewew.db');
+  String caminhoBanco = join(
+      await getDatabasesPath(), 'BANCODEDADOSDIGITALABRASUACONTAAGORAMESMO.db');
 
   return openDatabase(caminhoBanco, version: 1, onCreate: (db, version) async {
     await db.execute('''
@@ -24,14 +25,18 @@ Future<Database> getDatabase() async {
       tempo INTEGER NOT NULL,
       episodio INTEGER NOT NULL,
       temporada INTEGER NOT NULL,
-      serieid INTEGER NOT NULL,
-      FOREIGN KEY (serieid) REFERENCES series(id)
+      serie_id INTEGER NOT NULL,
+      FOREIGN KEY (serie_id) REFERENCES series(id)
     )
   ''');
 
-    print('Inserindo séries e episódios iniciais...');
+    if (kDebugMode) {
+      print('Inserindo séries e episódios iniciais...');
+    }
     insertTodasSeries();
     insertTodosEpisodios();
-    print('Inserção concluída.');
+    if (kDebugMode) {
+      print('Inserção concluída.');
+    }
   });
 }

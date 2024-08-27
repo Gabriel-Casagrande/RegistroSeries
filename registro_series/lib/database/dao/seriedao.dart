@@ -4909,12 +4909,12 @@ void insertTodosEpisodios() async {
   });
 }
 
-Future<List<Map<String, dynamic>>> loadTemporadas(int serieId) async {
+Future<List<Map<String, dynamic>>> loadTemporadas(int serie_id) async {
   Database db = await getDatabase();
   List<Map<String, dynamic>> temporadas = await db.query('episodios',
       columns: ['temporada'],
       where: 'serie_id = ?',
-      whereArgs: [serieId],
+      whereArgs: [serie_id],
       distinct: true);
   return temporadas;
 }

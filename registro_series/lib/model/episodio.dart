@@ -1,10 +1,12 @@
+// ignore_for_file: non_constant_identifier_names
+
 class Episodio {
   int? id;
   String nome;
   int tempo;
   int episodio;
   int temporada;
-  int? serieid;
+  int? serie_id;
 
   Episodio(
       {this.id,
@@ -12,7 +14,7 @@ class Episodio {
       required this.tempo,
       required this.episodio,
       required this.temporada,
-      this.serieid});
+      this.serie_id});
 
   Map<String, Object?> toMap() {
     return {
@@ -21,7 +23,7 @@ class Episodio {
       'tempo': tempo,
       'episodio': episodio,
       'temporada': temporada,
-      'serie_id': serieid
+      'serie_id': serie_id
     };
   }
 
@@ -32,11 +34,11 @@ class Episodio {
         tempo: int.parse(mapa['tempo'].toString()),
         episodio: int.parse(mapa['episodio'].toString()),
         temporada: int.parse(mapa['temporada'].toString()),
-        serieid: int.parse(mapa['serie_id'].toString()));
+        serie_id: int.parse(mapa['serie_id'].toString()));
   }
 
   @override
   String toString() {
-    return 'Serie: {ID: $id, Nome: $nome, Tempo: $tempo, Episodio: $episodio, Temporada: $temporada, Serie_id: $serieid}';
+    return 'Serie: {ID: $id, Nome: $nome, Tempo: $tempo, Episodio: $episodio, Temporada: $temporada, Serie_id: $serie_id}';
   }
 }
