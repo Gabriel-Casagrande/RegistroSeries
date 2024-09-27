@@ -255,7 +255,7 @@ Future<List<Serie>> fetchSeries() async {
 Future<List<int>> fetchSeasonsBySeriesId(int seriesId) async {
   Database db = await getDatabase();
   final List<Map<String, dynamic>> maps = await db.rawQuery(
-    'SELECT DISTINCT temporada FROM episodios WHERE id_serie = ? ORDER BY temporada',
+    'SELECT DISTINCT temporada FROM episodios WHERE serie_id = ? ORDER BY temporada',
     [seriesId],
   );
   return maps.map((map) => map['temporada'] as int).toList();
@@ -267,7 +267,7 @@ Future<List<Map<String, dynamic>>> fetchEpisodesBySeriesIdAndSeason(
   Database db = await getDatabase();
   return await db.query(
     'episodios',
-    where: 'id_serie = ? AND temporada = ?',
+    where: 'serie_id = ? AND temporada = ?',
     whereArgs: [seriesId, season],
     orderBy: 'episodio',
   );
