@@ -17,7 +17,9 @@ Future<void> main() async {
 
   databaseFactory = databaseFactoryFfi;
 
-  runApp(MaterialApp(home: TelaPrincipal()));
+  runApp(MaterialApp(home: TelaPrincipal(),
+                     debugShowCheckedModeBanner: false,
+  ));
 }
 
 class TelaPrincipal extends StatefulWidget {
